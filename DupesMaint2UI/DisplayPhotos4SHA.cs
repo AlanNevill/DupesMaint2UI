@@ -15,6 +15,10 @@ namespace DupesMaint2UI
     {
         private static readonly StreamWriter _writer = File.AppendText(@"./logfile.txt");
 
+        private ICollection<CheckSumDate> CheckSumDates { get; set; }
+
+        private CheckSumDate CheckSumDate { get; set; }
+
         private ICollection<CheckSum> CheckSums { get; set; }
         private CheckSum Photo1 { get; set; }
         private CheckSum Photo2 { get; set; }
@@ -24,22 +28,27 @@ namespace DupesMaint2UI
         {
             this.InitializeComponent();
 
-            // get the CheckSum rows
+            // get the CheckSumDate rows
             using (IDbConnection cnn = new SqlConnection(GetConnectionString()))
             {
-                string sql ="select * from CheckSum where CreateDateTime in " +
-                            "(select CreateDateTime from dbo.CheckSum where CreateDateTime > '1753-01-01' " +
-                            "group by CreateDateTime having count(*) > 1 ) " +
-                            "order by CreateDateTime, Id";
+                string sql = "select CreateDateTime, count(*) as DupesCount from dbo.CheckSum where CreateDateTime > '1753-01-01' group by CreateDateTime having count(*) > 1";
 
-                CheckSums = cnn.Query<CheckSum>(sql).ToList();
+                this.CheckSumDates = cnn.Query<CheckSumDate>(sql).ToList();
             }
 
 
             _writer.AutoFlush = true;
 
-            string mess = $"{DateTime.Now} - INFO - {this.CheckSums.Count()} CheckSum rows with CreateDateTime count > 1.";
+            string mess = $"\r\n{DateTime.Now} - INFO - {this.CheckSumDates.LongCount()} CheckSumDates rows with CreateDateTime count > 1.";
             Log(mess);
+
+            if (this.CheckSumDates.LongCount() < 2)
+            {
+                mess = $"\r\n{DateTime.Now} - ERROR - Only {this.CheckSumDates.LongCount()} CheckSumDates rows with CreateDateTime count > 1.";
+                Log(mess);
+                MessageBox.Show(mess);
+                this.Close();
+            }
 
             this.DisplayPhotos4DateTime();
         }
@@ -48,13 +57,37 @@ namespace DupesMaint2UI
         // constructor called by form SelectbySHA passing in the SHA string of the selected duplicates
         public void DisplayPhotos4DateTime()
         {
-            this.toolStripStatusLabel.Text = $"INFO - {this.CheckSums.Count()} CheckSum rows with CreateDateTime count > 1.";
+            this.toolStripStatusLabel.Text = $"INFO - {this.CheckSumDates.Count()} CheckSumDates rows with CreateDateTime count > 1.";
+
+            // get the first date from the collection
+            this.CheckSumDate = this.CheckSumDates.First();
+
+            string mess = $"There are {this.CheckSumDate.DupesCount} photos for the CreatetionDate: {this.CheckSumDate.CreateDateTime.ToString("yyyy-MM-dd HH:mm:ss")}";
+            Log(mess);
+            this.toolStripStatusLabel.Text = mess;
+
+            // get a collection of the CheckSum rows for this CreationDate
+            using (IDbConnection cnn = new SqlConnection(GetConnectionString()))
+            {
+                string sql = $"select * from CheckSum where CreateDateTime = '{this.CheckSumDate.CreateDateTime.ToString("yyyy-MM-dd HH:mm:ss")}' order by Id";
+
+                this.CheckSums = cnn.Query<CheckSum>(sql).ToList();
+            }
+
+            // check for count errors
+            if (this.CheckSumDate.DupesCount != this.CheckSums.Count)
+            {
+                mess = $"his.CheckSumDate.Count {this.CheckSumDate.DupesCount} != this.CheckSums.Count {this.CheckSums.Count}";
+                Log(mess);
+                MessageBox.Show(mess);
+                this.Close();
+            }
 
             // get the first photo
             this.Photo1 = this.CheckSums.First();
 
-            // get another photo with the same DateTime but different size
-            this.Photo2 = this.CheckSums.First(x =>  x.SCreateDateTime == this.Photo1.SCreateDateTime && x.FileSize != this.Photo1.FileSize);
+            // get the last photo
+            this.Photo2 = this.CheckSums.Last();
 
             if (this.Photo2 == null)
             {
@@ -79,7 +112,7 @@ namespace DupesMaint2UI
             }
             catch (Exception e)
             {
-                string mess = $"ERROR\n\r{e.ToString()}";
+                mess = $"{DateTime.Now} - ERROR\n\r{e.ToString()}";
                 Log(mess);
                 MessageBox.Show(mess);
                 this.Close();
@@ -121,10 +154,10 @@ namespace DupesMaint2UI
             // if move succeeds then write a new DupesAction row for Photo1
             this.DupesAction_Insert(this.Photo1, this.Photo2.FullName());
 
-            // delete Photo1 row from CheckSum table and delete Photo1 and Photo2 from CheckSumDups
+            // delete Photo1 and Photo2 from the CheckSum table and CheckSums collection
             this.Db_Delete(this.Photo1, this.Photo2);
 
-            // reset the check box
+            // reset the photo 1 check box
             this.cbPhoto1.Checked = false;
 
             // refresh the display
@@ -149,10 +182,10 @@ namespace DupesMaint2UI
             // if move succeeds then write a new DupesAction row for Photo1
             this.DupesAction_Insert(this.Photo2, this.Photo1.FullName());
 
-            // delete Photo1 row from CheckSum table and delete Photo1 and Photo2 from CheckSumDups
+            // delete Photo1 and Photo2 from the CheckSum table and CheckSums collection
             this.Db_Delete(this.Photo1, this.Photo2);
 
-            // reset the check box
+            // reset the photo2 check box
             this.cbPhoto2.Checked = false;
 
             // refresh the display
@@ -253,13 +286,12 @@ namespace DupesMaint2UI
             // remove the 2 rows from the CheckSum table
             using (IDbConnection cnn = new SqlConnection(GetConnectionString()))
             {
-                string sql = $"delete from CheckSum where id in ({photo1.Id},{photo2.Id})";
+                string sql = $"delete from CheckSum where Id in ({photo1.Id},{photo2.Id})";
                 cnn.Execute(sql, commandType: CommandType.Text);
             }
 
-            // remove the 2 photo from the CheckSum list
-            this.CheckSums.Remove(photo1);
-            this.CheckSums.Remove(photo2);
+            // remove the CheckSumDate item for the CreationDateTime from the CheckSumDates list
+            this.CheckSumDates.Remove(CheckSumDate);
         }
 
 
@@ -282,5 +314,18 @@ namespace DupesMaint2UI
         }
 
 
+        // keep both the photos
+        private void btnKeep_Click(object sender, EventArgs e)
+        {
+            string mess = $"{DateTime.Now} - WARN - These photo have the same EXIF Date\\Time: {this.Photo1.SCreateDateTime} but are different so they were kept.\r\n" +
+                $"{this.Photo1.FullName()}\r\n{this.Photo2.FullName()}";
+            Log(mess);
+
+            // delete Photo1 and Photo2 from the CheckSum table and remove the CreateDateTime from the CheckSumDates collection
+            this.Db_Delete(this.Photo1, this.Photo2);
+
+            // refresh the display
+            DisplayPhotos4DateTime();
+        }
     }
 }

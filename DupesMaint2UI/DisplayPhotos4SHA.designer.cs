@@ -43,6 +43,7 @@
             this.tbPhoto1Size = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.tbPhoto2Size = new System.Windows.Forms.TextBox();
+            this.btnKeep = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -124,7 +125,7 @@
             // 
             this.cbPhoto2.AutoSize = true;
             this.cbPhoto2.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cbPhoto2.Location = new System.Drawing.Point(476, 407);
+            this.cbPhoto2.Location = new System.Drawing.Point(498, 412);
             this.cbPhoto2.Name = "cbPhoto2";
             this.cbPhoto2.Size = new System.Drawing.Size(102, 17);
             this.cbPhoto2.TabIndex = 9;
@@ -136,7 +137,7 @@
             // 
             this.cbPhoto1.AutoSize = true;
             this.cbPhoto1.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.cbPhoto1.Location = new System.Drawing.Point(182, 407);
+            this.cbPhoto1.Location = new System.Drawing.Point(156, 412);
             this.cbPhoto1.Name = "cbPhoto1";
             this.cbPhoto1.Size = new System.Drawing.Size(102, 17);
             this.cbPhoto1.TabIndex = 10;
@@ -148,7 +149,7 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 427);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 447);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(702, 22);
             this.statusStrip1.TabIndex = 11;
@@ -185,11 +186,22 @@
             this.tbPhoto2Size.TabIndex = 14;
             this.tbPhoto2Size.Text = "Size";
             // 
+            // btnKeep
+            // 
+            this.btnKeep.Location = new System.Drawing.Point(329, 407);
+            this.btnKeep.Name = "btnKeep";
+            this.btnKeep.Size = new System.Drawing.Size(91, 24);
+            this.btnKeep.TabIndex = 15;
+            this.btnKeep.Text = "Keep both";
+            this.btnKeep.UseVisualStyleBackColor = true;
+            this.btnKeep.Click += new System.EventHandler(this.btnKeep_Click);
+            // 
             // DisplayPhotos4SHA
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(702, 449);
+            this.ClientSize = new System.Drawing.Size(702, 469);
+            this.Controls.Add(this.btnKeep);
             this.Controls.Add(this.tbPhoto2Size);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.tbPhoto1Size);
@@ -233,5 +245,6 @@
         private System.Windows.Forms.TextBox tbPhoto1Size;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox tbPhoto2Size;
+        private System.Windows.Forms.Button btnKeep;
     }
 }

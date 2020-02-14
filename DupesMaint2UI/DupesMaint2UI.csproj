@@ -66,6 +66,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\CheckSum.cs" />
+    <Compile Include="Models\CheckSumDate.cs" />
     <Compile Include="Models\DupesAction.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
