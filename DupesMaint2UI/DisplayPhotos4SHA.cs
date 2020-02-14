@@ -30,7 +30,7 @@ namespace DupesMaint2UI
                 string sql ="select * from CheckSum where CreateDateTime in " +
                             "(select CreateDateTime from dbo.CheckSum where CreateDateTime > '1753-01-01' " +
                             "group by CreateDateTime having count(*) > 1 ) " +
-                            "order by CreateDateTime, ";
+                            "order by CreateDateTime, Id";
 
                 CheckSums = cnn.Query<CheckSum>(sql).ToList();
             }
